@@ -1,0 +1,335 @@
+1.
+
+SELECT FirstName + ' ' + LastName, Salary
+FROM Employees e
+WHERE Salary = (SELECT MIN(Salary) FROM Employees)
+ORDER BY Salary
+
+2.
+
+SELECT FirstName + ' ' + LastName, Salary
+FROM Employees e
+WHERE (Salary >= (SELECT MIN(Salary) FROM Employees)
+AND Salary <= (SELECT MIN(Salary) FROM Employees) * 1.1)
+ORDER BY Salary
+
+3.
+
+SELECT FirstName + ' ' + LastName, Salary, d.Name
+FROM Employees e, Departments d
+WHERE Salary = (SELECT MIN(Salary) FROM Employees)
+ORDER BY Salary
+
+4.
+
+SELECT AVG(Salary) [Average Salary]
+FROM Employees 
+WHERE DepartmentID = 1
+
+5.
+
+SELECT AVG(Salary) [Average Salary]
+FROM Employees e, Departments d
+WHERE (e.DepartmentID = d.DepartmentID 
+	AND d.Name = 'Sales')
+	
+6.
+
+SELECT COUNT(EmployeeID) [Number of Employees]
+FROM Employees e
+
+7.
+
+SELECT COUNT(EmployeeID) [Number of Employees]
+FROM Employees e
+WHERE ManagerID IS NOT NULL
+
+8.
+
+SELECT COUNT(EmployeeID) [Number of Employees]
+FROM Employees e
+WHERE ManagerID IS NULL
+
+9.
+
+SELECT DepartmentID, AVG(Salary) AS [Average Salary]
+FROM Employees
+GROUP BY DepartmentID
+
+10.
+
+SELECT COUNT(e.EmployeeID), d.Name, t.Name
+FROM Employees e, Towns t, Addresses a, Departments d
+WHERE (e.AddressID = a.AddressID AND a.TownID = t.TownID)
+GROUP BY t.Name, d.Name
+
+11.
+
+SELECT m.FirstName + ' ' + m. LastName AS [MANAGER],
+	COUNT(*) AS [Employees N]
+FROM Employees e, Employees m
+WHERE e.ManagerID = m.EmployeeID
+GROUP BY m.FirstName, m.LastName
+HAVING COUNT(*) = 5
+
+12.
+
+SELECT e.FirstName + ' ' + e.LastName AS [Employee],
+	m.FirstName + ' ' + m.LastName AS [Manager]
+FROM Employees e, Employees m
+WHERE e.ManagerID = m.EmployeeID
+
+13.
+
+SELECT e.FirstName + ' ' + e. LastName AS [Employee]
+FROM Employees e
+WHERE LEN(e.LastName)=5
+
+14.
+
+DECLARE @dt1 datetime
+DECLARE @dt2 datetime
+SELECT @dt1 = '2013.07.09 12:00:00.000', @dt2 = GETDATE()
+
+SELECT CONVERT(VARCHAR(10), GETDATE(), 104) + ' ' + CONVERT(varchar(12), DATEADD(ms, DATEDIFF(ms, @dt1, @dt2), 0), 114)
+
+15.
+
+CREATE TABLE Users (
+	id int IDENTITY,
+	Username nvarchar(50) NOT NULL,
+	[Password] nvarchar(50) NOT NULL,
+	FullName nvarchar(50) NOT NULL,
+	LastLoginTime DATETIME NOT NULL,
+	CONSTRAINT PK_Students PRIMARY KEY(id),
+	CONSTRAINT PS_Password CHECK(LEN(Password)>=5),
+    CONSTRAINT UN_Username UNIQUE(Username)
+)
+
+16.
+
+SELECT u.Username
+FROM Users u
+WHERE DAY(u.LastLoginTime) = DAY(GETDATE())
+
+17.
+
+CREATE TABLE Groups(
+	id int IDENTITY,
+	Name nvarchar(50),
+	CONSTRAINT PK_Groups PRIMARY KEY(id),
+	CONSTRAINT UN_Name UNIQUE(Name)
+)
+
+18.
+
+ALTER TABLE Groups
+	DROP CONSTRAINT PK_id
+ALTER TABLE Groups
+	DROP COLUMN id
+ALTER TABLE Groups
+	ADD GroupID int IDENTITY
+ALTER TABLE Groups
+	ADD CONSTRAINT PK_Groups PRIMARY KEY(GroupID)
+ALTER TABLE Groups
+	ADD users_id int
+ALTER TABLE Groups
+	ADD CONSTRAINT FK_Groups_Users FOREIGN KEY(users_id)
+		REFERENCES Users(id)
+
+
+19.
+
+INSERT INTO Users (Username, [Password], FullName, LastLoginTime) SELECT 'user3', 'user3', 'someuser3', GETDATE()
+INSERT INTO Groups (Name, users_id) Select 'Group6', 5
+
+20.
+
+UPDATE Users
+SET Username='username11'
+WHERE Username = 'User1'
+
+21.
+
+
+ALTER TABLE Groups
+	DROP CONSTRAINT FK_Groups_Users
+
+DELETE FROM Users
+WHERE Username = 'User2'
+
+22.
+
+INSERT INTO USERS
+SELECT LOWER(LEFT(e.FirstName, 5) + e.LastName) AS Username, -- Duplicates when using 1/2
+	LOWER(LEFT(e.FirstName, 1) + e.LastName) + 'pass' AS [Password],
+	e.FirstName + ' ' + e.LastName AS FullName,
+	NULL AS LastLogin,
+	1 AS GroupID
+FROM Employees e
+
+23.
+
+UPDATE Users
+SET Password = NULL
+WHERE CONVERT(VARCHAR(10), '10.03.2010') > LastLoginTime
+
+24.
+
+DELETE
+FROM Users
+WHERE Password IS NULL
+
+25.
+
+SELECT AVG(Salary) AS [Average Salary],
+	d.Name AS [Department Name]
+FROM Employees e, Departments d
+WHERE e.DepartmentID = d.DepartmentID
+GROUP BY D.Name
+
+26.
+
+SELECT MIN(Salary) AS [Minimal Salary],
+	e.JobTitle AS [Job Title],
+	d.Name AS [Department Name],
+	min(e.FirstName + ' ' + e.LastName) AS [Full Name]
+FROM Employees e
+INNER JOIN Departments d
+ON e.DepartmentID = d.DepartmentID
+GROUP BY d.Name, E.JobTitle
+
+27.
+
+SELECT TOP 1 t.Name AS [Town], COUNT(e.EmployeeID) AS [EmployeeCount]
+FROM Employees e
+INNER JOIN Addresses a
+ON e.AddressID = a.AddressID
+INNER JOIN Towns t
+ON t.TownID = a.TownID
+GROUP BY t.Name 
+ORDER BY EmployeeCount DESC
+
+28.
+
+SELECT t.Name AS [Town], COUNT(e.EmployeeID) AS [ManagerCount]
+FROM Employees e
+	INNER JOIN Addresses a
+		ON e.AddressID = a.AddressID
+	INNER JOIN Towns t
+		ON t.TownID = a.TownID
+
+	WHERE e.EmployeeID IN (
+		SELECT DISTINCT m.EmployeeID
+		FROM Employees m
+			INNER JOIN Employees e
+				ON e.ManagerID = m.EmployeeID)
+GROUP BY t.Name
+
+29.
+
+CREATE TABLE WorkHours (
+	EmployeeID int IDENTITY,
+	OnDate DATETIME,
+	Task NVARCHAR(50),
+	HoursWorked int,
+	Comments text
+	CONSTRAINT PK_EmployeeID PRIMARY KEY (EmployeeID)
+	CONSTRAINT FK_EmployeeID FOREIGN KEY (EmployeeID)
+		REFERENCES Employees(EmployeeID)
+)
+
+INSERT INTO WorkHours 
+SELECT
+	GETDATE() AS OnDate,
+	'sometask1' AS Task,
+	6 AS HoursWorked,
+	'no comment' AS Comments
+
+UPDATE WorkHours
+	SET Task = 'no current task'
+	WHERE Task = 'sometask1'
+
+CREATE TRIGGER tr_Update ON dbo.WorkHours FOR UPDATE
+AS
+	BEGIN
+		INSERT INTO dbo.WorkHoursLogs
+		SELECT  i.EmployeeID AS NewEmployeeID, 
+			i.OnDate AS NewOnDate,
+			i.Task AS NewTask, 
+			i.HoursWorked AS NewHoursWorked,
+			i.Comments AS NewComments, 
+			'UPDATE' AS Command
+		FROM inserted i
+	END
+GO
+
+CREATE TRIGGER tr_Update ON dbo.WorkHours FOR INSERT
+AS
+	BEGIN
+		INSERT INTO dbo.WorkHoursLogs
+		SELECT  i.EmployeeID AS NewEmployeeID, 
+			i.OnDate AS NewOnDate,
+			i.Task AS NewTask, 
+			i.HoursWorked AS NewHoursWorked,
+			i.Comments AS NewComments, 
+			'INSERT' AS Command
+		FROM inserted i
+	END
+GO
+
+CREATE TRIGGER tr_Update ON dbo.WorkHours FOR DELETE
+AS
+	BEGIN
+		INSERT INTO dbo.WorkHoursLogs
+		SELECT  i.EmployeeID AS NewEmployeeID, 
+			i.OnDate AS NewOnDate,
+			i.Task AS NewTask, 
+			i.HoursWorked AS NewHoursWorked,
+			i.Comments AS NewComments, 
+			'DELETE' AS Command
+		FROM deleted i
+	END
+GO
+
+30.
+
+BEGIN TRAN
+DELETE FROM Employees 
+	SELECT d.Name
+	FROM Employees e JOIN Departments d
+	ON e.DepartmentID = d.DepartmentID
+	WHERE d.Name = 'Sales'
+	GROUP BY d.Name
+ROLLBACK TRAN
+
+31.
+
+BEGIN TRAN
+DROP TABLE EmployeesProjects
+ROLLBACK TRAN
+
+
+32.
+
+CREATE TABLE #TempTable (
+	EmployeeID int,
+	ProjectID int
+)
+
+INSERT INTO #TempTable
+SELECT ep.EmployeeID AS EmployeeID,
+	ep.ProjectID AS ProjectID
+FROM EmployeesProjects ep
+
+DROP TABLE EmployeesProjects
+
+CREATE TABLE EmployeesProjects (
+	EmployeeID int,
+	ProjectID int
+)
+
+INSERT INTO EmployeesProjects
+SELECT tt.EmployeeID AS EmployeeID,
+	tt.ProjectID AS ProjectID
+FROM #TempTable tt
